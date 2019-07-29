@@ -1,4 +1,4 @@
-# LCBO Whisky Recommondation Algorithm
+# LCBO Whisky Recommendation Algorithm
 **Sprint One: Exploratory Data Analysis**
 
 ## Research Question
