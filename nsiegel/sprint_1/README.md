@@ -51,7 +51,18 @@ Once the submission is loaded the text in the original submission is combined wi
 #### Save Data
 The data is saved to data/db_reviews.parquet
 
-### 03-scrape\_lcbo\_products.ipynb
+### 03-split\_review\_text.ipynb
+
+#### Summary
+This notebook splits up the review text into the categories we need: Nose, Taste, Finish. This works by splitting the text into lines and using some regular expressions.
+
+#### Extract Categories
+The extraction works by splitting the text into lines and following some regular expressions. It needs to take into account the situation where the text is on the next line so it handles that as well. Because it's a bit slow I've split this into a multiprocess that speeds it up quite a bit.
+
+#### Save Data
+The data is saved to data/db_reviews_split.parquet
+
+### 04-scrape\_lcbo\_products.ipynb
 
 #### Summary
 This notebook scrapes all product info from the LCBO api. Since the api needs product IDs, this file just tries every ID between 0 and 120 million. As such, with the rate limiting as well, this will take quite a while to run.
@@ -79,7 +90,7 @@ The following data cleaning is done:
 The data is saved to data/lcbo_productinfo.parquet,
 then whisky products only are selected and saved to data/lcbo_whisky.parquet
 
-### 04-whisky\_name\_matchup.ipynb
+### 05-whisky\_name\_matchup.ipynb
 
 #### Summary
 This notebook is to combine the reddit reviews with the LCBO product data. The difficulty in doing this comes from differing whisky names. To accomplish the join first we create a list of key phrases and extract them from the names. If whiskies have different key phrases, they do not match. Then we pull out the age of the whisky and compare that as well. Lastly, in terms of cases where there are still duplicates we use a fuzzy matching algorithm and take the highest rank.
