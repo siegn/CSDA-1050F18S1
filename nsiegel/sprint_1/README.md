@@ -1,7 +1,9 @@
 # LCBO Whisky Similarity Analysis
 **Sprint One: Exploratory Data Analysis**
+
 *By Nelson Siegel*
 
+## Table of Contents
   * [Research Question](#research-question)
   * [Getting Started](#getting-started)
     + [Clone this repository:](#clone-this-repository-)
