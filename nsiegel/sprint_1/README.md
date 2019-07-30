@@ -6,7 +6,7 @@
 ## Table of Contents
   * [Research Question](#research-question)
   * [Getting Started](#getting-started)
-    + [Clone this repository:](#clone-this-repository-)
+    + [Clone this Repository](#clone-this-repository)
     + [Setup Virtualenv](#setup-virtualenv)
     + [Launch Jupyter Notebooks](#launch-jupyter-notebooks)
   * [Notebook Descriptions](#notebook-descriptions)
@@ -60,7 +60,8 @@ There are two parts to this research question:
 
 ## Getting Started
 Here are instructions to get you set up and running quickly on a GNU/Linux system:
-### Clone this repository:
+
+### Clone this Repository
 ```bash
 git clone https://github.com/siegn/CSDA-1050F18S1.git
 cd CSDA-1050F18S1
@@ -213,7 +214,7 @@ Some of the analysis we do here depends on the Whisky styles provided, but there
 
 #### Reviews per Whisky
 It's important to get an idea of how many reviews we have per Whisky:
-https://github.com/siegn/CSDA-1050F18S1/blob/master/nsiegel/sprint_1/images/Histogram%20of%20Reviews%20per%20Whisky.png
+
 ![Reviews Per Whisky](https://raw.githubusercontent.com/siegn/CSDA-1050F18S1/master/nsiegel/sprint_1/images/Histogram%20of%20Reviews%20per%20Whisky.png)
 
 And to look at the number of reviews per style:
