@@ -6,8 +6,8 @@
 * [Last Time On LCBO Whisky Similarity Analysis](#last-time-on-lcbo-whisky-similarity-analysis)
 * [Notebook Descriptions](#notebook-descriptions)
     + [07-similarity.ipynb](#07-similarityipynb)
-    + [08-result_exploration.ipynb](#08-result-explorationipynb)
-    + [Conclusion](#conclusion)
+    + [08-result_exploration.ipynb](#08-result_explorationipynb)
+* [Conclusion](#conclusion)
 
 ## Last Time On LCBO Whisky Similarity Analysis
 
@@ -46,6 +46,6 @@ The output is a table in which each row contains two whisky ids and the similari
 
 This notebook demonstrates the whisky predictions by comparing an input whisky with the recommended whiskies it outputs. Take a look inside the notebook for some examples.
 
-### Conclusion
+## Conclusion
 
 I am happy with the results and the recommendations. Even after filtering out region and style names from the text the model recommends similar whiskies that fit the same category.
