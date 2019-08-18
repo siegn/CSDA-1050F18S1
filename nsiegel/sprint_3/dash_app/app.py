@@ -26,7 +26,7 @@ whiskies = [{'label' : whisky.Name, 'value' : whisky.itemnumber} for whisky in d
 
 # Function to find top matches and get info
 def show_top_similarities(itemnumber, top_n=5):
-    keepcolumns = ['itemnumber','name','style', 'similarity', 'rating','price','rating_per_dollar_per_750']
+    keepcolumns = ['id','name','style', 'similarity', 'rating','price','rating_per_dollar_per_750']
     return (similarities[(similarities['itemnumber'] == itemnumber) & 
              (similarities['itemnumber'] != similarities['itemnumber2'])]
                  .sort_values('sim', ascending=False)
@@ -36,7 +36,7 @@ def show_top_similarities(itemnumber, top_n=5):
                  .set_index('itemnumber')
                  .join(whiskyinfo)
                  .reset_index()
-                 .rename({'rating_mean':'rating','itemname':'name','index':'itemnumber'},axis=1)
+                 .rename({'rating_mean':'rating','itemname':'name','itemnumber':'id'},axis=1)
                  [keepcolumns]
                  #.drop({'RedditWhiskyIDs','reviewIDs','index_col'},axis=1)
                  #.rename({'nose_tfidf':'nose','taste_tfidf':'taste','finish_tfidf':'finish'},axis=1)
@@ -45,25 +45,34 @@ def show_top_similarities(itemnumber, top_n=5):
 # Function to print whisky descriptions:
 def getwhiskydesc(itemnumber):
     whisky = whiskyinfo.reset_index()[whiskyinfo.reset_index()['itemnumber']==itemnumber]
-    name = whisky.itemname.values[0]
-    price = str(round(whisky.price.values[0],2))
-    size = str(whisky.productsize.values[0])
-    rating = str(round(whisky.rating_mean.values[0],2))
-    rating_per_dollar_per_750 = str(round(whisky.rating_per_dollar_per_750.values[0],2))
-    nose = whisky['nose'].apply(lambda x : ' '.join(x)).values
-    taste = whisky['taste'].apply(lambda x : ' '.join(x)).values
-    finish = whisky['finish'].apply(lambda x : ' '.join(x)).values
-    
-    mydict = {'name' : name, 
-              'price': price,
-              'size' : size,
-              'rating' : rating,
-              'rating_per' : rating_per_dollar_per_750,
-              'nose' : nose,
-              'taste' : taste,
-              'finish' : finish
-             }
-    return mydict
+    if len(whisky.itemname.values) > 0:
+        name = whisky.itemname.values[0]
+        price = str(round(whisky.price.values[0],2))
+        size = str(whisky.productsize.values[0])
+        rating = str(round(whisky.rating_mean.values[0],2))
+        rating_per_dollar_per_750 = str(round(whisky.rating_per_dollar_per_750.values[0],2))
+        nose = whisky['nose'].apply(lambda x : ' '.join(x)).values
+        taste = whisky['taste'].apply(lambda x : ' '.join(x)).values
+        finish = whisky['finish'].apply(lambda x : ' '.join(x)).values
+        
+        mydict = {'name' : name, 
+                  'price': price,
+                  'size' : size,
+                  'rating' : rating,
+                  'rating_per' : rating_per_dollar_per_750,
+                  'nose' : nose,
+                  'taste' : taste,
+                  'finish' : finish
+                 }
+
+        markdown = '''**Price:** $''' + price + '''  
+                    **Size:** ''' + size + '''ml    
+                    **Rating:** ''' + rating + '''  
+                    **Rating / $:** ''' + rating_per_dollar_per_750
+    else:
+        name = 'Not Found'
+        markdown = '''**Cannot Find ID:**''' + str(itemnumber)
+    return name, markdown
 
 # Function to show all suggestions and details of the top suggestion
 def displaysuggestions(itemnumber, sort='rating_per_dollar_per_750', top_n = 5):
@@ -202,6 +211,20 @@ selected_card =  dbc.Card(
     style={"width":"18rem"}
 )
 
+suggested_card =  dbc.Card(
+        [
+            dbc.CardHeader('Name', className='card-title', id='suggested-name'),
+            dbc.CardBody(
+                [
+                    dcc.Markdown(''' #Markdown ''', id ='suggested-markdown')
+                ]
+             
+        )
+        ],
+    style={"width":"18rem"}
+)
+
+
 
 body = dbc.Container(
     [
@@ -236,20 +259,30 @@ body = dbc.Container(
                     ],
                     width=True
                 ),
+                dbc.Col(
+                    [
+                        dcc.Loading(id="loading-2", children=[html.P(id="loading-output-2")], type="graph",fullscreen=True),
+                        suggested_card
+                        ],
+                    width=True
+                ),
                 
             ]
         ),
         #dbc.Table.from_dataframe(df, striped=True, bordered=True,hover=True)
-        html.Div("Hello"),
+        
         html.Div(
                 dash_table.DataTable(
                     id='table',
-                    columns=[{"name": i, "id": i} for i in df2.columns],
+                    columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
                     data=df2.to_dict('records'),
-                    sort_action="native"
+                    sort_action="native",
+                    row_selectable='single',
+                    selected_rows = [0]
                 )
-        )
-
+        ),
+        dcc.Markdown(''' #Markdown ''', id ='suggestion-name')
+         
        ],
     className="mt-4",fluid=True
 )
@@ -271,6 +304,8 @@ df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 server = app.server
 app.layout = html.Div([navbar,body])
 #app.layout = html.Div([suggestiontable,navbar,body])
+
+# collapse callbacks
 @app.callback(
     Output("collapse1", "is_open"),
     [Input("collapse-button", "n_clicks")],
@@ -308,39 +343,105 @@ def toggle_collapse3(n, is_open):
     return is_open
 
 
-                
+# Select row in table
+# Update suggested whisky info
+@app.callback([
+    Output('suggested-name','children'),
+    Output('suggested-markdown','children')
+    ],
+    [Input('table','derived_viewport_row_ids'),
+    Input('table', 'derived_viewport_selected_row_ids')
+    ]
+    )
+def select_row(row_ids, selected_row_ids):
+    print('select row')
+    #print(selected_rows)
 
-# Update output text when whisky selected
+    if row_ids is None and selected_row_ids is None:  
+        name = "Not Found"
+        markdown = '''**Not found***'''
+    else:
+        if len(selected_row_ids) == 0:
+            #'No selection, selecting first!'
+            selected_id = row_ids[0]
+        elif selected_row_ids[0] not in row_ids:
+            #'Invalid selection! Selecting first!'
+            selected_id = row_ids[0]
+        else:
+            #('Already selected, keeping!')
+            selected_id = selected_row_ids[0]
+
+        # Grab name and markdown for this whisky
+        name, markdown  = getwhiskydesc(selected_id)
+
+    return name, markdown
+
+ #When the data in the table changes due to selecting a new whisky, select the top row.
+ #update selected row
+@app.callback(
+    Output('table','selected_rows')
+    ,
+    [Input('table','data'),
+    Input('table','derived_viewport_row_ids')]
+    )
+def data_updated(data, ids):
+    print('data change')
+    print('ids: ' + str(ids))
+    if data is not None and ids is not None:
+        # get list of ids in table data (ignoring sorting)
+        datalist = [d.get('id') for d in data]
+        # get id we actually want which is the first in derived viewport:
+        firstid = ids[0]
+        if firstid is not None:
+            # now find index in datalist
+            try:
+                rownum = datalist.index(firstid)
+            except:
+                #data not caught up yet, just use 0
+                print ('did not find! using 0')
+                rownum = 0
+            print('rownum: ' + str(rownum))
+        else: rownum = 0
+    else:
+        rownum = 0
+
+    return [rownum]
+            
+
+# Select whisky
+# Update table and selected whisky info
 @app.callback([
     Output("loading-output-1", "children"),
     Output('selected-name','children'),
     Output('selected-markdown','children'),
     Output('table','columns'),
     Output('table','data')
+
     ],
     [Input('input-whisky','value')])
 def update_text(value):
-    whiskydict = getwhiskydesc(value)
-    name = whiskydict.get('name')
-    price = '$' + whiskydict.get('price')
-    size = whiskydict.get('size') + 'ml'
-    rating = whiskydict.get('rating') + '/100'
-    ratingper = whiskydict.get('rating_per')
+    print('Select whisky')
+    # selected info
+    name, markdown  = getwhiskydesc(value)
     
-    markdown = '''**Price:** ''' + price + '''  
-    **Size:** ''' + size + '''  
-    **Rating:** ''' + rating + '''  
-    **Rating / $:** ''' + ratingper
-    
-    # get suggestions
+    #) get suggestions
     suggestions = show_top_similarities(value)
     
+    columns=[{"name": i, "id": i} for i in suggestions.columns if i != 'id']
     columns=[{"name": i, "id": i} for i in suggestions.columns]
     data=suggestions.to_dict('records')
+
+    selectedrow = [0]
     
     #print(text)
     return None, name, markdown, columns, data
 
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0')
+
+
+
+
+
+
 
