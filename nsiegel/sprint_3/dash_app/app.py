@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
 from dash.dependencies import Input, Output, State
+import flask
 
 import pickle
 import glob
@@ -21,6 +22,9 @@ similarities = pd.read_parquet('../../sprint_2/data/similarities2.parquet')
 
 # Create whisky list for dropdown
 whiskies = [{'label' : whisky.Name, 'value' : whisky.itemnumber} for whisky in df.reset_index().itertuples()]
+
+image_directory = 'wordclouds'
+static_image_route = '/home/jupyter-nelson/CSDA-1050F18S1/nsiegel/sprint_3/dash_app/wordclouds/' # /app/wordclouds when publishing
 
 # Functions
 
@@ -204,9 +208,9 @@ selected_card =  dbc.Card(
             dbc.CardBody(
                 [
                     dcc.Markdown(''' #Markdown ''', id ='selected-markdown')
-                ]
-             
-        )
+                ] 
+            ),
+            dbc.CardImg(src=None,bottom=True, id = 'selected-wordcloud')
         ],
     style={"width":"18rem"}
 )
@@ -218,8 +222,8 @@ suggested_card =  dbc.Card(
                 [
                     dcc.Markdown(''' #Markdown ''', id ='suggested-markdown')
                 ]
-             
-        )
+            ),
+            dbc.CardImg(src=None,bottom=True, id = 'suggested-wordcloud')
         ],
     style={"width":"18rem"}
 )
@@ -347,7 +351,8 @@ def toggle_collapse3(n, is_open):
 # Update suggested whisky info
 @app.callback([
     Output('suggested-name','children'),
-    Output('suggested-markdown','children')
+    Output('suggested-markdown','children'),
+    Output('suggested-wordcloud','src'),
     ],
     [Input('table','derived_viewport_row_ids'),
     Input('table', 'derived_viewport_selected_row_ids')
@@ -360,6 +365,7 @@ def select_row(row_ids, selected_row_ids):
     if row_ids is None and selected_row_ids is None:  
         name = "Not Found"
         markdown = '''**Not found***'''
+        imagename = None
     else:
         if len(selected_row_ids) == 0:
             #'No selection, selecting first!'
@@ -374,7 +380,9 @@ def select_row(row_ids, selected_row_ids):
         # Grab name and markdown for this whisky
         name, markdown  = getwhiskydesc(selected_id)
 
-    return name, markdown
+        imagename = static_image_route + '{}.png'.format(selected_id)
+
+    return name, markdown, imagename
 
  #When the data in the table changes due to selecting a new whisky, select the top row.
  #update selected row
@@ -414,9 +422,9 @@ def data_updated(data, ids):
     Output("loading-output-1", "children"),
     Output('selected-name','children'),
     Output('selected-markdown','children'),
+    Output('selected-wordcloud','src'),
     Output('table','columns'),
     Output('table','data')
-
     ],
     [Input('input-whisky','value')])
 def update_text(value):
@@ -431,17 +439,17 @@ def update_text(value):
     columns=[{"name": i, "id": i} for i in suggestions.columns]
     data=suggestions.to_dict('records')
 
-    selectedrow = [0]
+    imagename = static_image_route + '{}.png'.format(value)
     
     #print(text)
-    return None, name, markdown, columns, data
+    return None, name, markdown, imagename, columns, data
+
+@app.server.route('{}<image_path>.png'.format(static_image_route))
+def serve_image(image_path):
+    image_name = '{}.png'.format(image_path)
+    return flask.send_from_directory(image_directory, image_name)
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0')
-
-
-
-
-
-
 
