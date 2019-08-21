@@ -15,10 +15,14 @@ import time
 import pandas as pd
 
 # load saved models and data
+
 df = pd.read_parquet('../../sprint_2/data/whisky_tfidf.parquet')
-df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 whiskyinfo = pd.read_parquet('../../sprint_2/data/whiskyinfo.parquet')
 similarities = pd.read_parquet('../../sprint_2/data/similarities2.parquet')
+itemlinks = pd.read_parquet('data/itemlinks.parquet')
+
+# temp till data loads
+df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 
 # Create whisky list for dropdown
 whiskies = [{'label' : whisky.Name, 'value' : whisky.itemnumber} for whisky in df.reset_index().itertuples()]
@@ -28,9 +32,13 @@ static_image_route = '/home/jupyter-nelson/CSDA-1050F18S1/nsiegel/sprint_3/dash_
 
 # Functions
 
+# Get LCBO link for item
+def getLCBOLink(itemnumber):
+    return itemlinks[itemlinks['itemnumber']==itemnumber].link.get_values()[0]
+
 # Function to find top matches and get info
 def show_top_similarities(itemnumber, top_n=5):
-    keepcolumns = ['id','name','style', 'similarity', 'rating','price','rating_per_dollar_per_750']
+    keepcolumns = ['id','Name','Style', 'Similarity', 'Rating','Price','Rating Per Dollar','Alcohol Percentage']
     return (similarities[(similarities['itemnumber'] == itemnumber) & 
              (similarities['itemnumber'] != similarities['itemnumber2'])]
                  .sort_values('sim', ascending=False)
@@ -40,10 +48,9 @@ def show_top_similarities(itemnumber, top_n=5):
                  .set_index('itemnumber')
                  .join(whiskyinfo)
                  .reset_index()
-                 .rename({'rating_mean':'rating','itemname':'name','itemnumber':'id'},axis=1)
+                 .rename({'itemname':'Name','style':'Style','similarity':'Similarity','rating_mean':'Rating',
+                          'itemnumber':'id','price':'Price','rating_per_dollar_per_750':'Rating Per Dollar', 'alcoholpercentage':'Alcohol Percentage'},axis=1)
                  [keepcolumns]
-                 #.drop({'RedditWhiskyIDs','reviewIDs','index_col'},axis=1)
-                 #.rename({'nose_tfidf':'nose','taste_tfidf':'taste','finish_tfidf':'finish'},axis=1)
     )
 
 # Function to print whisky descriptions:
@@ -55,24 +62,22 @@ def getwhiskydesc(itemnumber):
         size = str(whisky.productsize.values[0])
         rating = str(round(whisky.rating_mean.values[0],2))
         rating_per_dollar_per_750 = str(round(whisky.rating_per_dollar_per_750.values[0],2))
-        nose = whisky['nose'].apply(lambda x : ' '.join(x)).values
-        taste = whisky['taste'].apply(lambda x : ' '.join(x)).values
-        finish = whisky['finish'].apply(lambda x : ' '.join(x)).values
-        
-        mydict = {'name' : name, 
-                  'price': price,
-                  'size' : size,
-                  'rating' : rating,
-                  'rating_per' : rating_per_dollar_per_750,
-                  'nose' : nose,
-                  'taste' : taste,
-                  'finish' : finish
-                 }
+        alcohol_percentage = str(round(whisky.alcoholpercentage.values[0],0))
+
+        link = getLCBOLink(itemnumber)
 
         markdown = '''**Price:** $''' + price + '''  
                     **Size:** ''' + size + '''ml    
+                    **Alcohol:** ''' + alcohol_percentage + '''%  ''' + '''  
                     **Rating:** ''' + rating + '''  
-                    **Rating / $:** ''' + rating_per_dollar_per_750
+                    **Rating / $:** ''' + rating_per_dollar_per_750 
+        if link is None:
+            markdown += '''  
+            No longer listed at LCBO '''
+        else:
+            markdown += '''  
+            [View on LCBO Site](''' + str(link) + ''' "View on LCBO")'''
+
     else:
         name = 'Not Found'
         markdown = '''**Cannot Find ID:**''' + str(itemnumber)
@@ -282,13 +287,21 @@ body = dbc.Container(
                     data=df2.to_dict('records'),
                     sort_action="native",
                     row_selectable='single',
-                    selected_rows = [0]
+                    selected_rows = [0],
+                    style_as_list_view=True,
+                    style_cell_conditional=[
+                        {
+                            'if': {'column_id': c},
+                            'textAlign': 'left'
+                        } for c in ['Name', 'Style']
+                    ]
                 )
         ),
         dcc.Markdown(''' #Markdown ''', id ='suggestion-name')
          
        ],
     className="mt-4",fluid=True
+
 )
 
 
@@ -359,9 +372,6 @@ def toggle_collapse3(n, is_open):
     ]
     )
 def select_row(row_ids, selected_row_ids):
-    print('select row')
-    #print(selected_rows)
-
     if row_ids is None and selected_row_ids is None:  
         name = "Not Found"
         markdown = '''**Not found***'''
@@ -393,8 +403,6 @@ def select_row(row_ids, selected_row_ids):
     Input('table','derived_viewport_row_ids')]
     )
 def data_updated(data, ids):
-    print('data change')
-    print('ids: ' + str(ids))
     if data is not None and ids is not None:
         # get list of ids in table data (ignoring sorting)
         datalist = [d.get('id') for d in data]
@@ -406,9 +414,7 @@ def data_updated(data, ids):
                 rownum = datalist.index(firstid)
             except:
                 #data not caught up yet, just use 0
-                print ('did not find! using 0')
                 rownum = 0
-            print('rownum: ' + str(rownum))
         else: rownum = 0
     else:
         rownum = 0
@@ -428,20 +434,24 @@ def data_updated(data, ids):
     ],
     [Input('input-whisky','value')])
 def update_text(value):
-    print('Select whisky')
     # selected info
     name, markdown  = getwhiskydesc(value)
     
     #) get suggestions
     suggestions = show_top_similarities(value)
+    # Format table values nicely
+    suggestions['Similarity']         = suggestions['Similarity']*100
+    suggestions['Similarity']         = suggestions['Similarity'].map('{:,.2f}%'.format)
+    suggestions['Rating']             = suggestions['Rating'].map('{:,.2f}'.format)
+    suggestions['Price']              = suggestions['Price'].map('${:,.2f}'.format)
+    suggestions['Rating Per Dollar']  = suggestions['Rating Per Dollar'].map('{:,.2f}'.format)
+    suggestions['Alcohol Percentage'] = suggestions['Alcohol Percentage'].map('{:,.0f}%'.format)
     
     columns=[{"name": i, "id": i} for i in suggestions.columns if i != 'id']
-    columns=[{"name": i, "id": i} for i in suggestions.columns]
     data=suggestions.to_dict('records')
 
     imagename = static_image_route + '{}.png'.format(value)
     
-    #print(text)
     return None, name, markdown, imagename, columns, data
 
 @app.server.route('{}<image_path>.png'.format(static_image_route))
