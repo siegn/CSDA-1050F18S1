@@ -20,6 +20,7 @@ df = pd.read_parquet('../../sprint_2/data/whisky_tfidf.parquet')
 whiskyinfo = pd.read_parquet('../../sprint_2/data/whiskyinfo.parquet')
 similarities = pd.read_parquet('../../sprint_2/data/similarities2.parquet')
 itemlinks = pd.read_parquet('data/itemlinks.parquet')
+reviewlist = pd.read_parquet("data/reviewlist.parquet")
 
 # temp till data loads
 df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
