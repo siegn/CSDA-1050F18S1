@@ -77,7 +77,7 @@ def getwhiskydesc(itemnumber):
             No longer listed at LCBO '''
         else:
             markdown += '''  
-            [View on LCBO Site](''' + str(link) + ''' "View on LCBO")'''
+            [**View on LCBO Site**](''' + str(link) + ''' "View on LCBO")'''
 
     else:
         name = 'Not Found'
@@ -100,26 +100,26 @@ def displaysuggestions(itemnumber, sort='rating_per_dollar_per_750', top_n = 5):
     printwhiskydesc(results.reset_index().itemnumber.iloc[0])
     
 # Whisky Selection Dropdown
-whisky_selector = dbc.Row(
-    [
-        dbc.Col(
-            dbc.NavbarBrand("Select Whisky:", className="ml-2"),
-            width="auto",
-        ),
-        dbc.Col( dcc.Dropdown(id = 'input-whisky', 
-                                    options = whiskies,
-                                    value = 248997, # Laphroaig 10
-                                    style={'width':600},
-                                    clearable = False),
-
-        width='auto'
-        ),
-
-    ],
-    no_gutters=True,
-    className="ml-auto flex-nowrap mt-3 mt-md-0",
-    align="center",
-)
+#whisky_selector = dbc.Row(
+#    [
+#        dbc.Col(
+#            dbc.NavbarBrand("Select Whisky:", className="ml-2"),
+#            width="auto",
+#        ),
+#        dbc.Col( dcc.Dropdown(id = 'input-whisky', 
+#                                    options = whiskies,
+#                                    value = 248997, # Laphroaig 10
+#                                    style={'width':600},
+#                                    clearable = False),
+#
+#        width='auto'
+#        ),
+#
+#    ],
+#    no_gutters=True,
+#    className="ml-auto flex-nowrap mt-3 mt-md-0",
+#    align="center",
+#)
 
 
 navbar = dbc.Navbar(
@@ -143,7 +143,7 @@ navbar = dbc.Navbar(
             className="mb-10",
             color="info"))
         , id="navbar-collapse", navbar=True),
-        whisky_selector,
+        #whisky_selector,
        
     ],
     color="primary",
@@ -208,97 +208,159 @@ all_cards = [
    
 ]
 
+
+#cardwidth = 250
+
 selected_card =  dbc.Card(
         [
             dbc.CardHeader('Name', className='card-title', id='selected-name'),
+            dbc.CardImg(src=None,top=True, id = 'selected-wordcloud'),
             dbc.CardBody(
                 [
-                    dcc.Markdown(''' #Markdown ''', id ='selected-markdown')
-                ] 
+                	#html.H4('Name', className='card-title', id='selected-name'),
+                    dcc.Markdown(''' #Markdown ''', id ='selected-markdown'),
+
+		                ] 
             ),
-            dbc.CardImg(src=None,bottom=True, id = 'selected-wordcloud')
         ],
-    style={"width":"18rem"}
+        #style={"width": "2rem"},
+        color = 'info', inverse=True
+    #style={"width":"18rem"}
 )
 
 suggested_card =  dbc.Card(
         [
             dbc.CardHeader('Name', className='card-title', id='suggested-name'),
+            dbc.CardImg(src=None,top=True, id = 'suggested-wordcloud'),
             dbc.CardBody(
                 [
                     dcc.Markdown(''' #Markdown ''', id ='suggested-markdown')
                 ]
             ),
-            dbc.CardImg(src=None,bottom=True, id = 'suggested-wordcloud')
         ],
-    style={"width":"18rem"}
+        #style={"width": "18rem"},
+        color = 'info', inverse=True
+   # style={"width":"18rem"}
 )
 
+selected_reviews_card =  dbc.Card(
+        [
+            dbc.CardHeader('Reviews', className='card-title',),
+            #dbc.CardImg(src=None,top=True, id = 'suggested-wordcloud'),
+            dbc.CardBody(
+                [
+                    dcc.Markdown(''' Reviews go here ''')
+                ]
+            ),
+        ],
+        #style={"width": "18rem"},
+        color = 'info', inverse=True
+   # style={"width":"18rem"}
+)
 
+cardwidth = 1
 
 body = dbc.Container(
     [
+    	# Info cards
         dbc.Row(
             [
-            dbc.Col(
-                dbc.Collapse(
-                    dbc.Card(intro_card, color="success", inverse=True),
-                    id='collapse1'
-                ),
-            ),
-            dbc.Col(
-                dbc.Collapse(
-                    dbc.Card(data_card, color="info", inverse=True),
-                    id='collapse2'
-                ),
-            ),
-            dbc.Col(
-                dbc.Collapse(
-                    dbc.Card(info_card, color="warning", inverse=True),
-                    id='collapse3'
-                ),
-            ),
+            dbc.Col([
+	        	dbc.Collapse(	
+		            dbc.CardDeck([
+							dbc.Card(intro_card, color="success", inverse=True),
+							dbc.Card(data_card , color="info"   , inverse=True),
+							dbc.Card(info_card , color="warning", inverse=True),
+			            ]),
+						id = 'collapse1'
+					)
+	            ])
             ]
         ),
+
+
+      
+
+        # Selected Whisky Card
         dbc.Row(
             [
                 dbc.Col(
                     [   
                         dcc.Loading(id="loading-1", children=[html.P(id="loading-output-1")], type="graph",fullscreen=True),
-                        selected_card
-                    ],
-                    width=True
+                        html.H3('Selected Whisky', style={'textAlign':'center', 'textSize':25}),
+                		selected_card,
+
+                    ], 
                 ),
+            	dbc.Col([
+				  # Selector
+			        dbc.Row([
+				 		dbc.Card([
+							dbc.CardHeader('Select Whisky', className='card-title',style={'textAlign':'center','font-size':24,'color':'white'}),
+				            dbc.CardBody(
+				                [
+				                   dcc.Dropdown(id = 'input-whisky', 
+		                               options = whiskies,
+		                               value = 248997, # Laphroaig 10
+		                               style={'width':600},
+		                               clearable = False
+	                               ),
+				                ]
+				            ),
+				 		], color='primary', #inverse=True
+				 		)
+			        ],justify='center'),
+
+			        dbc.Row([
+			        	html.Div('   '),
+            			html.H3('Most Similar Whiskies', style={'textAlign':'center'}),
+			        ], justify = 'center', align='center'),
+            		dbc.Row([
+					 	#html.Div(
+			                dash_table.DataTable(
+			                    id='table',
+			                    columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+			                    data=df2.to_dict('records'),
+			                    sort_action="native",
+			                    row_selectable='single',
+			                    selected_rows = [0],
+			                    #style_as_list_view=True,
+			                    style_cell_conditional=[
+			                        {
+			                            'if': {'column_id': c},
+			                            'textAlign': 'left'
+			                        } for c in ['Name', 'Style']
+			                    ]
+			                )
+					    #),
+        			]),
+            		dbc.Row([
+            			dbc.Button("View Reviews",
+			            id="selected_review_button",
+			            className="mb-10",
+			            color="info"),
+				    	dbc.Collapse(
+	            			selected_reviews_card,
+	            			id='selected_review_collapse'
+	            		),
+            		])
+        		], width="auto",),
                 dbc.Col(
                     [
+                    	html.H3('Recommended Whisky', style={'textAlign':'center'}),
                         dcc.Loading(id="loading-2", children=[html.P(id="loading-output-2")], type="graph",fullscreen=True),
-                        suggested_card
-                        ],
-                    width=True
+                        suggested_card,
+                    ],
+                   
                 ),
+               # dbc.Col([]),
                 
             ]
         ),
         #dbc.Table.from_dataframe(df, striped=True, bordered=True,hover=True)
-        
-        html.Div(
-                dash_table.DataTable(
-                    id='table',
-                    columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
-                    data=df2.to_dict('records'),
-                    sort_action="native",
-                    row_selectable='single',
-                    selected_rows = [0],
-                    style_as_list_view=True,
-                    style_cell_conditional=[
-                        {
-                            'if': {'column_id': c},
-                            'textAlign': 'left'
-                        } for c in ['Name', 'Style']
-                    ]
-                )
-        ),
-        dcc.Markdown(''' #Markdown ''', id ='suggestion-name')
+        dbc.Row([
+        	
+        	])
          
        ],
     className="mt-4",fluid=True
@@ -337,25 +399,25 @@ def toggle_collapse1(n, is_open):
 server = app.server
 app.layout = html.Div([navbar,body])
 
-@app.callback(
-    Output("collapse2", "is_open"),
-    [Input("collapse-button", "n_clicks")],
-    [State("collapse2", "is_open")],
-)
-def toggle_collapse2(n, is_open):
-    if n:
-        return not is_open
-    return is_open
+#@app.callback(
+#    Output("collapse2", "is_open"),
+#    [Input("collapse-button", "n_clicks")],
+#    [State("collapse2", "is_open")],
+#)
+#def toggle_collapse2(n, is_open):
+#    if n:
+#        return not is_open
+#    return is_open
 
-server = app.server
-app.layout = html.Div([navbar,body])
+#server = app.server
+#app.layout = html.Div([navbar,body])
 
 @app.callback(
-    Output("collapse3", "is_open"),
-    [Input("collapse-button", "n_clicks")],
-    [State("collapse3", "is_open")],
+    Output("selected_review_collapse", "is_open"),
+    [Input("selected_review_button", "n_clicks")],
+    [State("selected_review_collapse", "is_open")],
 )
-def toggle_collapse3(n, is_open):
+def toggle_selected_review_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
