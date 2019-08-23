@@ -3,7 +3,7 @@ import dash_core_components as dcc
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_table
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ClientsideFunction
 import flask
 
 import pickle
@@ -22,6 +22,10 @@ similarities = pd.read_parquet('../../sprint_2/data/similarities2.parquet')
 itemlinks = pd.read_parquet('data/itemlinks.parquet')
 reviewlist = pd.read_parquet("data/reviewlist.parquet")
 
+selreviewpage = 0
+selreviewpagesize = 10
+selitemnumber = 0
+
 # temp till data loads
 df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 
@@ -32,6 +36,10 @@ image_directory = 'wordclouds'
 static_image_route = '/home/jupyter-nelson/CSDA-1050F18S1/nsiegel/sprint_3/dash_app/wordclouds/' # /app/wordclouds when publishing
 
 # Functions
+
+# Gets markdown with links to user reviews
+def getReviews(itemnumber):
+    return reviewlist.loc[itemnumber].rename(columns={'username':'Username','rating':'Rating','reviewLink':'Link'})[['Rating','Username','Link']]
 
 # Get LCBO link for item
 def getLCBOLink(itemnumber):
@@ -74,10 +82,10 @@ def getwhiskydesc(itemnumber):
                     **Rating / $:** ''' + rating_per_dollar_per_750 
         if link is None:
             markdown += '''  
-            No longer listed at LCBO '''
+            **LCBO Link:** No longer listed at LCBO '''
         else:
             markdown += '''  
-            [**View on LCBO Site**](''' + str(link) + ''' "View on LCBO")'''
+            **LCBO Link:** [**View on LCBO Site**](''' + str(link) + ''' "View on LCBO")'''
 
     else:
         name = 'Not Found'
@@ -99,28 +107,6 @@ def displaysuggestions(itemnumber, sort='rating_per_dollar_per_750', top_n = 5):
     # Print info about top match whisky
     printwhiskydesc(results.reset_index().itemnumber.iloc[0])
     
-# Whisky Selection Dropdown
-#whisky_selector = dbc.Row(
-#    [
-#        dbc.Col(
-#            dbc.NavbarBrand("Select Whisky:", className="ml-2"),
-#            width="auto",
-#        ),
-#        dbc.Col( dcc.Dropdown(id = 'input-whisky', 
-#                                    options = whiskies,
-#                                    value = 248997, # Laphroaig 10
-#                                    style={'width':600},
-#                                    clearable = False),
-#
-#        width='auto'
-#        ),
-#
-#    ],
-#    no_gutters=True,
-#    className="ml-auto flex-nowrap mt-3 mt-md-0",
-#    align="center",
-#)
-
 
 navbar = dbc.Navbar(
     [
@@ -219,7 +205,10 @@ selected_card =  dbc.Card(
                 [
                 	#html.H4('Name', className='card-title', id='selected-name'),
                     dcc.Markdown(''' #Markdown ''', id ='selected-markdown'),
-
+                    dbc.Button("View Reviews",
+                        id="selected_review_button",
+                        className="mb-10",
+                        color="success"),
 		                ] 
             ),
         ],
@@ -234,7 +223,12 @@ suggested_card =  dbc.Card(
             dbc.CardImg(src=None,top=True, id = 'suggested-wordcloud'),
             dbc.CardBody(
                 [
-                    dcc.Markdown(''' #Markdown ''', id ='suggested-markdown')
+                    dcc.Markdown(''' #Markdown ''', id ='suggested-markdown'),
+                     dbc.Button("View Reviews",
+                        id="suggested_review_button",
+                        className="mb-10",
+                        color="success"),
+                         
                 ]
             ),
         ],
@@ -245,20 +239,65 @@ suggested_card =  dbc.Card(
 
 selected_reviews_card =  dbc.Card(
         [
-            dbc.CardHeader('Reviews', className='card-title',),
+            dbc.CardHeader('Reviews', className='card-title', id='selected-reviews-header'),
             #dbc.CardImg(src=None,top=True, id = 'suggested-wordcloud'),
             dbc.CardBody(
                 [
-                    dcc.Markdown(''' Reviews go here ''')
+                     dash_table.DataTable(
+                                id='selected-reviews',
+                                columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+                                data=df2.to_dict('records'),
+                                sort_action="native",
+                                page_action="native",
+                                page_current=0,
+                                page_size = 8,
+                                #row_selectable='single',
+                                style_as_list_view=True,
+                                style_cell_conditional=[
+                                    {
+                                        'if': {'column_id': 'Link'},
+                                       # 'textAlign': 'left',
+                                        'overflow':'clip',
+                                        'maxWidth':35
+                                    } for c in ['Name', 'Style']
+                                    ]
+                                    )
                 ]
             ),
         ],
-        #style={"width": "18rem"},
-        color = 'info', inverse=True
-   # style={"width":"18rem"}
+        color = 'success', inverse=False
 )
 
-cardwidth = 1
+suggested_reviews_card =  dbc.Card(
+        [
+            dbc.CardHeader('Reviews', className='card-title', id='suggested-reviews-header'),
+            #dbc.CardImg(src=None,top=True, id = 'suggested-wordcloud'),
+            dbc.CardBody(
+                [
+                     dash_table.DataTable(
+                                id='suggested-reviews',
+                                columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+                                data=df2.to_dict('records'),
+                                sort_action="native",
+                                page_action="native",
+                                page_current=0,
+                                page_size = 8,
+                                #row_selectable='single',
+                                style_as_list_view=True,
+                                style_cell_conditional=[
+                                    {
+                                        'if': {'column_id': 'Link'},
+                                       # 'textAlign': 'left',
+                                        'overflow':'clip',
+                                        'maxWidth':35
+                                    } for c in ['Name', 'Style']
+                                    ]
+                                    )
+                ]
+            ),
+        ],
+        color = 'success', inverse=False
+)
 
 body = dbc.Container(
     [
@@ -274,14 +313,10 @@ body = dbc.Container(
 			            ]),
 						id = 'collapse1'
 					)
-	            ])
+	            ],align='start')
             ]
         ),
-
-
-      
-
-        # Selected Whisky Card
+         html.Div(id='selected-hidden-target'),
         dbc.Row(
             [
                 dbc.Col(
@@ -290,11 +325,11 @@ body = dbc.Container(
                         html.H3('Selected Whisky', style={'textAlign':'center', 'textSize':25}),
                 		selected_card,
 
-                    ], 
+                    ], width = 3 
                 ),
             	dbc.Col([
 				  # Selector
-			        dbc.Row([
+			        dbc.Row([ # Select Whisky
 				 		dbc.Card([
 							dbc.CardHeader('Select Whisky', className='card-title',style={'textAlign':'center','font-size':24,'color':'white'}),
 				            dbc.CardBody(
@@ -309,53 +344,59 @@ body = dbc.Container(
 				            ),
 				 		], color='primary', #inverse=True
 				 		)
-			        ],justify='center'),
-
-			        dbc.Row([
+			        ],justify='center', align='start'),
+                    html.Br(),
+			        dbc.Row([ # Similar Table Header
 			        	html.Div('   '),
             			html.H3('Most Similar Whiskies', style={'textAlign':'center'}),
-			        ], justify = 'center', align='center'),
-            		dbc.Row([
-					 	#html.Div(
-			                dash_table.DataTable(
-			                    id='table',
-			                    columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
-			                    data=df2.to_dict('records'),
-			                    sort_action="native",
-			                    row_selectable='single',
-			                    selected_rows = [0],
-			                    #style_as_list_view=True,
-			                    style_cell_conditional=[
-			                        {
-			                            'if': {'column_id': c},
-			                            'textAlign': 'left'
-			                        } for c in ['Name', 'Style']
-			                    ]
-			                )
-					    #),
-        			]),
-            		dbc.Row([
-            			dbc.Button("View Reviews",
-			            id="selected_review_button",
-			            className="mb-10",
-			            color="info"),
-				    	dbc.Collapse(
-	            			selected_reviews_card,
-	            			id='selected_review_collapse'
-	            		),
-            		])
-        		], width="auto",),
+			        ], justify = 'center', align='start'),
+                    dbc.Row([# Table for similar whiskies
+                        dbc.Col([
+                            dash_table.DataTable(
+                                id='table',
+                                columns=[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+                                data=df2.to_dict('records'),
+                                sort_action="native",
+                                row_selectable='single',
+                                selected_rows = [0],
+                                #style_as_list_view=True,
+                                style_cell_conditional=[
+                                    {
+                                        'if': {'column_id': c},
+                                        'textAlign': 'left'
+                                    } for c in ['Name', 'Style']
+                                ]
+                            )
+                        ])
+        			], justify='center', align='end'),
+            		html.Br(),
+                    dbc.Row([ # Reviews
+            			dbc.Col([
+                       
+                            dbc.Collapse(
+                                selected_reviews_card, 
+                                id='selected_review_collapse',
+                                ),
+                        ]),
+                        dbc.Col([
+                            dbc.Collapse(
+                                suggested_reviews_card,
+                                id='suggested_review_collapse',
+                                ),
+                        ])
+            		],justify='around',align='stretch')
+        		], width=6,),
                 dbc.Col(
                     [
                     	html.H3('Recommended Whisky', style={'textAlign':'center'}),
                         dcc.Loading(id="loading-2", children=[html.P(id="loading-output-2")], type="graph",fullscreen=True),
                         suggested_card,
-                    ],
+                    ], width=3
                    
                 ),
                # dbc.Col([]),
                 
-            ]
+            ] , align='stretch'
         ),
         #dbc.Table.from_dataframe(df, striped=True, bordered=True,hover=True)
         dbc.Row([
@@ -412,6 +453,13 @@ app.layout = html.Div([navbar,body])
 #server = app.server
 #app.layout = html.Div([navbar,body])
 
+app.clientside_callback(
+    ClientsideFunction('ui', 'replaceWithLinks'),
+    Output('selected-hidden-target', 'children'),
+    [Input('selected-reviews', 'derived_viewport_data'),
+     Input('suggested-reviews', 'derived_viewport_data')]
+)
+
 @app.callback(
     Output("selected_review_collapse", "is_open"),
     [Input("selected_review_button", "n_clicks")],
@@ -422,13 +470,26 @@ def toggle_selected_review_collapse(n, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output("suggested_review_collapse", "is_open"),
+    [Input("suggested_review_button", "n_clicks")],
+    [State("suggested_review_collapse", "is_open")],
+)
+def toggle_suggested_review_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 
 # Select row in table
 # Update suggested whisky info
 @app.callback([
     Output('suggested-name','children'),
+    Output('suggested-reviews-header', 'children'),
     Output('suggested-markdown','children'),
-    Output('suggested-wordcloud','src'),
+    Output('suggested-reviews', 'columns'),
+    Output('suggested-reviews', 'data'),
+    Output('suggested-wordcloud','src')
     ],
     [Input('table','derived_viewport_row_ids'),
     Input('table', 'derived_viewport_selected_row_ids')
@@ -439,6 +500,8 @@ def select_row(row_ids, selected_row_ids):
         name = "Not Found"
         markdown = '''**Not found***'''
         imagename = None
+        reviewcolumns =[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+        reviewdata=df2.to_dict('records'),
     else:
         if len(selected_row_ids) == 0:
             #'No selection, selecting first!'
@@ -453,9 +516,18 @@ def select_row(row_ids, selected_row_ids):
         # Grab name and markdown for this whisky
         name, markdown  = getwhiskydesc(selected_id)
 
+        try:
+            reviews = getReviews(selected_id)
+        except:
+            reviewcolumns =[{"name": i, "id": i} for i in df2.columns if i not in ['id']],
+            reviewdata=df2.to_dict('records'),
+        else:
+            reviewcolumns = [{"name":i, "id":i} for i in reviews.columns if i != 'itemnumber']
+            reviewdata = reviews.to_dict('records')
+
         imagename = static_image_route + '{}.png'.format(selected_id)
 
-    return name, markdown, imagename
+    return name, name + ' REVIEWS', markdown, reviewcolumns, reviewdata, imagename
 
  #When the data in the table changes due to selecting a new whisky, select the top row.
  #update selected row
@@ -490,13 +562,17 @@ def data_updated(data, ids):
 @app.callback([
     Output("loading-output-1", "children"),
     Output('selected-name','children'),
+    Output('selected-reviews-header', 'children'),
     Output('selected-markdown','children'),
     Output('selected-wordcloud','src'),
+    Output('selected-reviews', 'columns'),
+    Output('selected-reviews', 'data'),
     Output('table','columns'),
     Output('table','data')
     ],
     [Input('input-whisky','value')])
 def update_text(value):
+    selitemnumber = value
     # selected info
     name, markdown  = getwhiskydesc(value)
     
@@ -514,8 +590,12 @@ def update_text(value):
     data=suggestions.to_dict('records')
 
     imagename = static_image_route + '{}.png'.format(value)
+
+    reviews = getReviews(value)
+    reviewcolumns = [{"name":i, "id":i} for i in reviews.columns if i != 'itemnumber']
+    reviewdata = reviews.to_dict('records')
     
-    return None, name, markdown, imagename, columns, data
+    return None, name, name + ' REVIEWS', markdown, imagename, reviewcolumns, reviewdata, columns, data
 
 @app.server.route('{}<image_path>.png'.format(static_image_route))
 def serve_image(image_path):
