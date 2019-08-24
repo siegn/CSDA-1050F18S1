@@ -5,13 +5,11 @@ import dash_html_components as html
 import dash_table
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import flask
-
 import pickle
 import glob
 from textwrap import dedent
 import plotly.graph_objs as go
 import time
-
 import pandas as pd
 
 # load saved models and data
@@ -22,7 +20,11 @@ similarities = pd.read_parquet('/app/data/similarities.parquet')
 itemlinks = pd.read_parquet('/app/data/itemlinks.parquet')
 reviewlist = pd.read_parquet('/app/data/reviewlist.parquet')
 
-# chart colors
+# variables used to load images
+image_directory = 'wordclouds'
+static_image_route = '/home/jupyter-nelson/CSDA-1050F18S1/nsiegel/sprint_3/dash_app/wordclouds/' # /app/wordclouds when publishing
+
+# card and table colors
 infocolor = 'rgb(106,192,222)'
 lightinfocolor = 'rgb(220,241,248)'
 primarycolor = 'rgb(44,136,180)'
@@ -40,14 +42,12 @@ reviewColor = 'black'
 reviewHeaderBgColor = lightsuccesscolor
 reviewHeaderColor = 'black'
 
-# temp till data loads
+# temporary dataframe to load into tables to avoid null errors as data is populated
 df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 
 # Create whisky list for dropdown
 whiskies = [{'label' : whisky.Name, 'value' : whisky.itemnumber} for whisky in df.reset_index().itertuples()]
 
-image_directory = 'wordclouds'
-static_image_route = '/home/jupyter-nelson/CSDA-1050F18S1/nsiegel/sprint_3/dash_app/wordclouds/' # /app/wordclouds when publishing
 
 # Functions
 
@@ -122,6 +122,12 @@ def displaysuggestions(itemnumber, sort='rating_per_dollar_per_750', top_n = 5):
     printwhiskydesc(results.reset_index().itemnumber.iloc[0])
     
 
+# Interface
+
+# Separate parts of the interface are defined here then combined later.
+# This makes it easier to have the app be adaptive to different displays
+
+# Navigation bar
 navbar = dbc.Navbar(
     [
         html.A(
@@ -149,6 +155,7 @@ navbar = dbc.Navbar(
     dark=True,
 )
 
+# Card giving into to the app
 intro_card = [
     dbc.CardHeader("Introduction"),
     dbc.CardBody(
@@ -167,6 +174,7 @@ intro_card = [
     ),
 ]
 
+# Card explaining data sources
 data_card = [
     dbc.CardHeader("Data"),
     dbc.CardBody(
@@ -184,6 +192,7 @@ data_card = [
     ),
 ]
 
+# Card giving more info about the app
 info_card = [
     dbc.CardHeader("More Info"),
     dbc.CardBody(
@@ -199,7 +208,7 @@ info_card = [
     ),
 ]
 
-
+# Collapse that shows table of user reviews of selected whisky, or hides
 selectedreviewcollapse =   dbc.Collapse(
                                 html.Div(
                                     dash_table.DataTable(
@@ -235,7 +244,7 @@ selectedreviewcollapse =   dbc.Collapse(
                                 id='selected_review_collapse', is_open = False
                             )
                         
-
+# Collapse that shows table of user reviews of suggested whisky, or hides
 suggestedreviewcollapse = dbc.Collapse(
                                 html.Div(
                                     dash_table.DataTable(
@@ -271,7 +280,7 @@ suggestedreviewcollapse = dbc.Collapse(
                                 id='suggested_review_collapse', is_open=False
                             )
                         
-
+# Card that shows all details of selected whisky
 selected_card =  dbc.Card(
         [
             dbc.CardHeader('Name', className='card-title', id='selected-name'),
@@ -295,6 +304,7 @@ selected_card =  dbc.Card(
         #style={'width':cardwidth}
 )
 
+# Card that shows all details of suggested whisky
 suggested_card =  dbc.Card(
         [
             dbc.CardHeader('Name', className='card-title', id='suggested-name'),
@@ -317,7 +327,7 @@ suggested_card =  dbc.Card(
         #style={'width':cardwidth}
 )
 
-
+# Card in which user selects a whisky
 selectwhisky = [ # Select Whisky
                         dbc.Card([
                             dbc.CardHeader('Select Whisky', className='card-title',style={'textAlign':'center','font-size':24,'color':'white'}),
@@ -335,11 +345,13 @@ selectwhisky = [ # Select Whisky
                         )
                     ]
 
+# Just a header for the table
 similartableheader = [ # Similar Table Header
                         html.Div('   '),
                         html.H3('Most Similar Whiskies', style={'textAlign':'center'}),
                     ]
 
+# Table that holds whisky suggestions
 similarwhiskytable = [
                             dash_table.DataTable(
                                 id='table',
@@ -369,7 +381,7 @@ similarwhiskytable = [
                         ]
 
 
-
+# Here is where the full interface is defined
 body = dbc.Container(
     [
         # Info cards
@@ -446,7 +458,6 @@ body = dbc.Container(
 
 
 # interface
-#ext_css = ['https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css']
 external_stylesheets = [dbc.themes.YETI]
 app = dash.Dash(
     __name__,
@@ -458,9 +469,8 @@ df2 = pd.DataFrame([[1, 2], [3, 4], [5, 6], [7, 8]], columns=["A", "B"])
 
 server = app.server
 app.layout = html.Div([navbar,body])
-#app.layout = html.Div([suggestiontable,navbar,body])
 
-# collapse callbacks
+# About cards collapse
 @app.callback(
     Output("collapse1", "is_open"),
     [Input("collapse-button", "n_clicks")],
@@ -471,16 +481,18 @@ def toggle_collapse1(n, is_open):
         return not is_open
     return is_open
 
-server = app.server
-app.layout = html.Div([navbar,body])
 
-app.clientside_callback(
+# Replaces links in tables with actual links
+# This was required due to a data_table limitation.
+# It uses the javascript included in assets/app_ui.js
+@app.clientside_callback(
     ClientsideFunction('ui', 'replaceWithLinks'),
     Output('selected-hidden-target', 'children'),
     [Input('selected-reviews', 'derived_viewport_data'),
      Input('suggested-reviews', 'derived_viewport_data')]
 )
 
+# When a review is expanded, collapse wordcloud and nice versa for selected whisky
 @app.callback([
     Output("selected_review_collapse", "is_open"),
     Output("selected_img_collapse", "is_open")],
@@ -494,6 +506,7 @@ def toggle_selected_review_collapse(n, rev_open, img_open):
         img_open = not img_open
     return rev_open, img_open
 
+# When a review is expanded, collapse wordcloud and nice versa for suggested whisky
 @app.callback(
     [Output("suggested_review_collapse", "is_open"),
      Output("suggested_img_collapse", "is_open")],
@@ -622,6 +635,7 @@ def update_text(value):
     
     return None, name, markdown, imagename, reviewcolumns, reviewdata, columns, data
 
+# To serve local images
 @app.server.route('{}<image_path>.png'.format(static_image_route))
 def serve_image(image_path):
     image_name = '{}.png'.format(image_path)
