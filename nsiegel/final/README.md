@@ -1,4 +1,9 @@
-# CSDA1050-master
-Final Results
--Need a presentation (ppt, video, etc. - must be explict and self guided) - no more than 10 minutes...seriously
--Need a writeup report of findings (Markdown/PDF - research paper format) - likely 5-10 pages... keep in mind you don't have infinite time. 
+![Whisky Barrels](https://raw.githubusercontent.com/siegn/CSDA-1050F18S1/master/nsiegel/sprint_1/images/woodford_small.png)
+# LCBO Whisky Similarity Analysis
+**Final Submission: Report and App**
+
+## Report
+Report is located in this directory in the file LCBO-Whisky-Similarity.pdf
+
+## App
+In lieu of a presentation, I have created an App as per agreement with the instructor. This app is viewable [here](https://lcbo-whisky-similarity.herokuapp.com/), and source code and documentation can be found on my [github sprint 3 submission](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel/sprint_3)
