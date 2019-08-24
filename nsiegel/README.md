@@ -6,9 +6,9 @@
   * [App](#app)
   * [Introduction](#introduction)
   * [Repository Structure](#repository-structure)
-    + [[Sprint 1: Data Gathering and Analysis](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel/sprint_1)](#-sprint-1--data-gathering-and-analysis--https---githubcom-siegn-csda-1050f18s1-tree-master-nsiegel-sprint-1-)
-    + [[Sprint 2: Modelling](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel/sprint_2)](#-sprint-2--modelling--https---githubcom-siegn-csda-1050f18s1-tree-master-nsiegel-sprint-2-)
-    + [[Sprint 3: App](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel/sprint_3)](#-sprint-3--app--https---githubcom-siegn-csda-1050f18s1-tree-master-nsiegel-sprint-3-)
+    + [Sprint 1: Data Gathering and Analysis](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel#sprint-1-data-gathering-and-analysis)
+    + [Sprint 2: Modelling](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel#sprint-2-modelling)
+    + [Sprint 3: App](https://github.com/siegn/CSDA-1050F18S1/tree/master/nsiegel#sprint-3-app)
   * [Software Requirements](#software-requirements)
     + [Clone this Repository](#clone-this-repository)
     + [Setup Virtualenv](#setup-virtualenv)
@@ -22,7 +22,7 @@ You can view the LCBO Whisky Similarity Analysis App [here](https://lcbo-whisky-
 
 The intent of this repository was to answer the following two questions:
 
-1. Given a whiskey that the user enjoys, how can we tell other whiskeys they will enjoy? The method used to determine is flavour similarity Word Mover Distance with Word2Vec on whisky review text.
+1. Given a whisky that the user enjoys, how can we tell other whiskeys they will enjoy? The method used to determine is flavour similarity Word Mover Distance with Word2Vec on whisky review text.
 
 2. Based on the prices available for these whiskies at the LCBO, what is the best value purchase the user could choose that they would enjoy the most for the least cost? To do this a Rating per Price is displayed.
 
