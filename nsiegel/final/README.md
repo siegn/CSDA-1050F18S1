@@ -1,11 +1,12 @@
 ![Whisky Barrels](https://raw.githubusercontent.com/siegn/CSDA-1050F18S1/master/nsiegel/sprint_1/images/woodford_small.png)
 # LCBO Whisky Similarity Analysis
-**Final Submission: Report and App**
+**Final Submission: Report and App**  
+*By Nelson Siegel*
 
 ## Report
 Report is located in this directory in the file LCBO-Whisky-Similarity.pdf
 
-## Report Code
+### Report Code
 Report was created using LaTeX and the code is available in the reportcode folder.
 
 ## App
