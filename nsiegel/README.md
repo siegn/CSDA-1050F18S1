@@ -1,6 +1,6 @@
 ![Whisky Barrels](https://raw.githubusercontent.com/siegn/CSDA-1050F18S1/master/nsiegel/sprint_1/images/woodford_small.png)
 # LCBO Whisky Similarity Analysis
-**Overview**
+**Overview**  
 *By Nelson Siegel*
 
   * [App](#app)
