@@ -5,7 +5,7 @@
   * [Last Time On LCBO Whisky Similarity Analysis](#last-time-on-lcbo-whisky-similarity-analysis)
   * [Goal of Sprint](#goal-of-sprint)
   * [Notebook Description](#notebook-description)
-    + [10_prepare_app_data.ipynb](#10-prepare-app-dataipynb)
+    + [10_prepare_app_data.ipynb](#10_prepare_app_dataipynb)
       - [WordCloud Images](#wordcloud-images)
       - [LCBO Links](#lcbo-links)
       - [Review Links](#review-links)
