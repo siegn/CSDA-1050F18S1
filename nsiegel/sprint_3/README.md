@@ -1,6 +1,6 @@
 ![Whisky Barrels](https://raw.githubusercontent.com/siegn/CSDA-1050F18S1/master/nsiegel/sprint_1/images/woodford_small.png)
 # LCBO Whisky Similarity Analysis
-**Sprint Three: App**
+**Sprint Three: App**  
 *By Nelson Siegel*
   * [Last Time On LCBO Whisky Similarity Analysis](#last-time-on-lcbo-whisky-similarity-analysis)
   * [Goal of Sprint](#goal-of-sprint)
