@@ -16,11 +16,11 @@ import pandas as pd
 
 # load saved models and data
 
-df = pd.read_parquet('../../sprint_2/data/whisky_tfidf.parquet')
-whiskyinfo = pd.read_parquet('../../sprint_2/data/whiskyinfo.parquet')
-similarities = pd.read_parquet('../../sprint_2/data/similarities2.parquet')
-itemlinks = pd.read_parquet('data/itemlinks.parquet')
-reviewlist = pd.read_parquet("data/reviewlist.parquet")
+df = pd.read_parquet('/app/data/whisky_tfidf.parquet')
+whiskyinfo = pd.read_parquet('/app/data/whiskyinfo.parquet')
+similarities = pd.read_parquet('/app/data/similarities.parquet')
+itemlinks = pd.read_parquet('/app/data/itemlinks.parquet')
+reviewlist = pd.read_parquet('/app/data/reviewlist.parquet')
 
 # chart colors
 infocolor = 'rgb(106,192,222)'
