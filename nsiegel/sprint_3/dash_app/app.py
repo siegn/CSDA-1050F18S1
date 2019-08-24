@@ -106,22 +106,6 @@ def getwhiskydesc(itemnumber):
         markdown = '''**Cannot Find ID:**''' + str(itemnumber)
     return name, markdown
 
-# Function to show all suggestions and details of the top suggestion
-def displaysuggestions(itemnumber, sort='rating_per_dollar_per_750', top_n = 5):
-    columns = ['itemname',
-              'similarity', 'rating_per_dollar_per_750','rating_mean','price','productsize',
-              'style',
-               'nose','taste','finish'
-              ]
-    results = show_top_similarities(itemnumber, top_n)[columns].sort_values(sort,ascending=False)
-    # Print main results
-    display(results)
-    # Print info about search whisky
-    printwhiskydesc(itemnumber)
-    # Print info about top match whisky
-    printwhiskydesc(results.reset_index().itemnumber.iloc[0])
-    
-
 # Interface
 
 # Separate parts of the interface are defined here then combined later.
