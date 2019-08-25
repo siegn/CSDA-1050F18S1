@@ -13,12 +13,14 @@ import time
 import pandas as pd
 
 # load saved models and data
+#datafolder = "/app/data/" # for deployment
+datafolder = "data/" # for local
 
-df = pd.read_parquet('/app/data/whisky_tfidf.parquet')
-whiskyinfo = pd.read_parquet('/app/data/whiskyinfo.parquet')
-similarities = pd.read_parquet('/app/data/similarities.parquet')
-itemlinks = pd.read_parquet('/app/data/itemlinks.parquet')
-reviewlist = pd.read_parquet('/app/data/reviewlist.parquet')
+df = pd.read_parquet(datafolder + 'whisky_tfidf.parquet')
+whiskyinfo = pd.read_parquet(datafolder + 'whiskyinfo.parquet')
+similarities = pd.read_parquet(datafolder + 'similarities.parquet')
+itemlinks = pd.read_parquet(datafolder + 'itemlinks.parquet')
+reviewlist = pd.read_parquet(datafolder + 'reviewlist.parquet')
 
 # variables used to load images
 image_directory = 'wordclouds'
@@ -469,7 +471,10 @@ def toggle_collapse1(n, is_open):
 # Replaces links in tables with actual links
 # This was required due to a data_table limitation.
 # It uses the javascript included in assets/app_ui.js
-@app.clientside_callback(
+# You may notice there is an @ missing from this line,
+# and be tempted to add it in becuase it looks like a mistake.
+# don't do that! it will break the whole app
+app.clientside_callback(
     ClientsideFunction('ui', 'replaceWithLinks'),
     Output('selected-hidden-target', 'children'),
     [Input('selected-reviews', 'derived_viewport_data'),
